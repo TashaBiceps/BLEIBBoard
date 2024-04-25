@@ -9,6 +9,8 @@ import android.bluetooth.BluetoothGattService
 import android.content.Context
 import android.util.Log
 import androidx.annotation.RequiresPermission
+import com.example.bleibboard.domain.BtMPUData
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import java.util.UUID
@@ -27,6 +29,13 @@ class BLEDeviceConnection @RequiresPermission("PERMISSION_BLUETOOTH_CONNECT") co
     val passwordRead = MutableStateFlow<String?>(null)
     val successfulNameWrites = MutableStateFlow(0)
     val services = MutableStateFlow<List<BluetoothGattService>>(emptyList())
+
+    val xValues = MutableStateFlow<Float>(0.0F)
+    val yValues = MutableStateFlow<Float>(0.0F)
+
+    val xandyvalues = MutableStateFlow<BtMPUData>(BtMPUData(0.0F, 0.0F))
+
+    val notifications = MutableSharedFlow<String>()
 
     private val callback = object: BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
@@ -80,6 +89,13 @@ class BLEDeviceConnection @RequiresPermission("PERMISSION_BLUETOOTH_CONNECT") co
         ) {
             super.onCharacteristicChanged(gatt, characteristic)
             Log.v("bluetooth", characteristic.value.contentToString())
+            val notification = characteristic.value.contentToString()
+            Log.v("btMPUData", String(characteristic.value,Charsets.UTF_8))
+            Log.v("notification", notification)
+            notifications.tryEmit(notification)
+            val btMPUData = String(characteristic.value,Charsets.UTF_8).toBtMPUData()
+            Log.v("btMPUData", btMPUData.toString())
+            xandyvalues.tryEmit(btMPUData)
         }
     }
 
@@ -117,6 +133,16 @@ class BLEDeviceConnection @RequiresPermission("PERMISSION_BLUETOOTH_CONNECT") co
             desc?.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
             gatt?.writeDescriptor(desc)
         }
+    }
+
+    fun String.toBtMPUData(): BtMPUData {
+        val xValue = substringBeforeLast("#").toFloat()
+        val yValue = substringAfter("#").toFloat()
+
+        return BtMPUData(
+            xValue = xValue,
+            yValue = yValue
+        )
     }
 
     /*

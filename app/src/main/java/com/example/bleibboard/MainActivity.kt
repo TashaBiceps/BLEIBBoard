@@ -23,6 +23,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import com.example.bleibboard.ui.screens.BluetoothScreen
 import com.example.bleibboard.ui.screens.DeviceScreen
+import com.example.bleibboard.ui.screens.TestScreen
 import com.example.bleibboard.ui.screens.Welcome
 import com.example.bleibboard.ui.screens.haveAllPermissions
 import com.example.bleibboard.ui.theme.BLEIBBoardTheme
@@ -50,6 +51,7 @@ enum class Screens() {
     Bluetooth,
     Menu,
     Device,
+    Test,
     Records
 }
 
@@ -101,7 +103,15 @@ fun Navigation(
                 discoveredCharacteristics = uiState.discoveredCharacteristics,
                 connect = viewModel::connectActiveDevice,
                 discoverServices = viewModel::discoverActiveDeviceServices,
-                startNotifications = viewModel::beginNotificationsFromActiveDevice
+                startNotifications = viewModel::beginNotificationsFromActiveDevice,
+                startTest = { navController.navigate(Screens.Test.name) }
+            )
+        }
+        composable(route = Screens.Test.name) {
+            TestScreen(
+                getPath = { viewModel.getPath() },
+                x = uiState.xOffsetState,
+                y = uiState.yOffsetState
             )
         }
     }

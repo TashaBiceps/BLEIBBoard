@@ -1,54 +1,45 @@
 package com.example.bleibboard.ui.viewmodels
 
 import android.bluetooth.BluetoothDevice
+import androidx.compose.ui.graphics.Path
 import androidx.lifecycle.ViewModel
-import com.example.BLEIBBoard.domain.bluetooth.BtMPUData
+import com.example.bleibboard.domain.BtMPUData
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class TestViewModel : ViewModel() {
 
-    val testState : Boolean = false
-    val xComponents: List<Float> = emptyList(),
-    val yComponents: List<Float> = emptyList(),
-    val xOffsetState: Float = 0f,
-    val yOffsetState: Float = 0f
-
-    private val _uiState = MutableStateFlow(TestUIState())
-    private val uiState = combine(
-        _uiState
-        testState,
-        xComponents,
-        yComponents,
-    ) { state, isDeviceConnected, services ->
-        state.copy(
-            isDeviceConnected = isDeviceConnected,
-            discoveredCharacteristics = services.associate { service -> Pair(service.uuid.toString(), service.characteristics.map { it.uuid.toString() }) },
-        )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), TestUIState())
-    )
-
-    private val xComponents = savedStateHandle.getStateFlow("xComponents", emptyList<Float>())
-    private val yComponents = savedStateHandle.getStateFlow("yComponents", emptyList<Float>())
-
-    val xOffsetState = savedStateHandle.getStateFlow("xOffsetState", 0f)
-    val yOffsetState = savedStateHandle.getStateFlow("yOffsetState", 0f)
+    val testState = MutableStateFlow(false)
+    val xComponents = MutableStateFlow(listOf<Float>())
+    val yComponents = MutableStateFlow(listOf<Float>())
+    val xOffsetState = MutableStateFlow(0f)
+    val yOffsetState = MutableStateFlow(0f)
 
     fun addPoint(x: Float, y: Float) {
-        val xComponents = xComponents.value + x
-        val yComponents = yComponents.value + y
+        xComponents.value += x
+        yComponents.value += y
+        xOffsetState.value = x
+        yOffsetState.value = y
+    }
 
-        savedStateHandle["xComponents"] = xComponents
-        savedStateHandle["yComponents"] = yComponents
+    fun clearPoints() {
+        xComponents.value = emptyList<Float>()
+        yComponents.value = emptyList<Float>()
+    }
 
-        savedStateHandle["xOffsetState"] = x
-        savedStateHandle["yOffsetState"] = y
+    fun getPath() : Path {
+        val path = Path()
+        val xComponents = xComponents.value
+        val yComponents = yComponents.value
+
+        if (xComponents.size == yComponents.size) {
+            for (i in xComponents.indices) {
+                if (i == 0) {
+                    path.moveTo(xComponents[i], yComponents[i])
+                } else {
+                    path.lineTo(xComponents[i], yComponents[i])
+                }
+            }
+        }
+        return path
     }
 }
-
-data class TestUIState(
-    val testState : Boolean = false
-    val xComponents: List<Float> = emptyList(),
-    val yComponents: List<Float> = emptyList(),
-    val xOffsetState: Float = 0f,
-    val yOffsetState: Float = 0f
-)

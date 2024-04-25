@@ -23,7 +23,8 @@ fun DeviceScreen(
     discoveredCharacteristics: Map<String, List<String>>,
     connect: () -> Unit,
     discoverServices: () -> Unit,
-    startNotifications: () -> Unit
+    startNotifications: () -> Unit,
+    startTest: () -> Unit
 ) {
     val foundTargetService = discoveredCharacteristics.contains(CTF_SERVICE_UUID.toString())
 
@@ -49,6 +50,10 @@ fun DeviceScreen(
         }
         Button(onClick = startNotifications) {
             Text("3. Begin notifications")
+        }
+
+        Button(onClick = startTest) {
+            Text("4. Begin test")
         }
 
         OutlinedButton(modifier = Modifier.padding(top = 40.dp),  onClick = unselectDevice) {
