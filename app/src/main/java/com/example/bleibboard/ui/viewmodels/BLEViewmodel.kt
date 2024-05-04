@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Application
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothGattService
 import android.content.pm.PackageManager
 import androidx.annotation.RequiresPermission
 import androidx.compose.ui.graphics.Path
@@ -26,6 +27,10 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.jvm.internal.MagicApiIntrinsics
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class BLEViewModel(private val application: Application): AndroidViewModel(application) {
@@ -42,6 +47,7 @@ class BLEViewModel(private val application: Application): AndroidViewModel(appli
     private val activeDeviceCoordinates = activeConnection.flatMapLatest {
         it?.xandyvalues ?: flowOf(BtMPUData(0.0F, 0.0F))
     }
+
 
     private var collectionJob: Job? = null
 
@@ -60,7 +66,11 @@ class BLEViewModel(private val application: Application): AndroidViewModel(appli
         activeDeviceServices,
         xOffsetState,
         yOffsetState
-    ) { state, isDeviceConnected, services, xcoordinate, ycoordinate ->
+    ) { state : BLEUIState,
+        isDeviceConnected : Boolean,
+        services : List<BluetoothGattService>,
+        xcoordinate : Float,
+        ycoordinate : Float ->
         state.copy(
             isDeviceConnected = isDeviceConnected,
             discoveredCharacteristics = services.associate {
@@ -142,25 +152,17 @@ class BLEViewModel(private val application: Application): AndroidViewModel(appli
     fun addPoint(x: Float, y: Float) {
         xComponents.value += x
         yComponents.value += y
-        xOffsetState.value = x
-        yOffsetState.value = y
     }
 
     suspend fun startTest() {
         val incomingMPUDataFlow: Flow<BtMPUData> = activeDeviceCoordinates
 
-
         collectionJob = viewModelScope.launch {
             incomingMPUDataFlow.collect { data ->
-                addPoint(data.xValue, data.yValue)
+                xOffsetState.value = data.xValue
+                yOffsetState.value = data.yValue
             }
         }
-        /*
-        incomingMPUDataFlow.collect { data ->
-            addPoint(data.xValue, data.yValue)
-
-        }
-        */
     }
 
     fun stopTest() {
@@ -169,25 +171,35 @@ class BLEViewModel(private val application: Application): AndroidViewModel(appli
 
     fun clearTest() {
         collectionJob?.cancel()
+        xOffsetState.value = 0f
+        yOffsetState.value = 0f
         xComponents.value = emptyList<Float>()
         yComponents.value = emptyList<Float>()
     }
 
     fun getPath() : Path {
         val path = Path()
+
         val xComponents = xComponents.value
         val yComponents = yComponents.value
 
         if (xComponents.size == yComponents.size) {
             for (i in xComponents.indices) {
-                if (i == 0) {
+                if (i in 0..3 ) {
                     path.moveTo(xComponents[i], yComponents[i])
                 } else {
                     path.lineTo(xComponents[i], yComponents[i])
                 }
             }
         }
+
         return path
+
+    }
+
+
+    fun mapRange(value: Float, fromRange1: Float, toRange1: Float, fromRange2: Float, toRange2: Float): Float {
+        return (value - fromRange1) * (toRange2 - fromRange2) / (toRange1 - fromRange1) + fromRange2
     }
 }
 
@@ -198,5 +210,6 @@ data class BLEUIState(
     val isDeviceConnected: Boolean = false,
     val discoveredCharacteristics: Map<String, List<String>> = emptyMap(),
     val xOffsetState : Float = 0.0F,
-    val yOffsetState : Float = 0.0F
+    val yOffsetState : Float = 0.0F,
+    val pathPoints : List<Pair<Float, Float>> = emptyList()
 )

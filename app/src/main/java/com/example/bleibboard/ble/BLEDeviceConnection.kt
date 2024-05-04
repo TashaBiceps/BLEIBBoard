@@ -88,14 +88,15 @@ class BLEDeviceConnection @RequiresPermission("PERMISSION_BLUETOOTH_CONNECT") co
             characteristic: BluetoothGattCharacteristic
         ) {
             super.onCharacteristicChanged(gatt, characteristic)
-            Log.v("bluetooth", characteristic.value.contentToString())
+            //Log.v("bluetooth", characteristic.value.contentToString())
             val notification = characteristic.value.contentToString()
-            Log.v("btMPUData", String(characteristic.value,Charsets.UTF_8))
-            Log.v("notification", notification)
-            notifications.tryEmit(notification)
+            //Log.v("btMPUData", String(characteristic.value,Charsets.UTF_8))
+            //Log.v("notification", notification)
+            //notifications.tryEmit(notification)
             val btMPUData = String(characteristic.value,Charsets.UTF_8).toBtMPUData()
             Log.v("btMPUData", btMPUData.toString())
-            xandyvalues.tryEmit(btMPUData)
+            //xandyvalues.tryEmit(btMPUData)
+            xandyvalues.value = btMPUData
         }
     }
 

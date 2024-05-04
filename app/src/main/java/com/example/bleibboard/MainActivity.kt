@@ -1,7 +1,6 @@
 package com.example.bleibboard
 
 import android.annotation.SuppressLint
-import android.content.pm.ActivityInfo
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -104,15 +103,21 @@ fun Navigation(
                 connect = viewModel::connectActiveDevice,
                 discoverServices = viewModel::discoverActiveDeviceServices,
                 startNotifications = viewModel::beginNotificationsFromActiveDevice,
-                startTest = { navController.navigate(Screens.Test.name) }
+                startTest = { navController.navigate(Screens.Test.name) },
             )
         }
         composable(route = Screens.Test.name) {
             TestScreen(
-                getPath = { viewModel.getPath() },
-                x = uiState.xOffsetState,
-                y = uiState.yOffsetState
+                getPath =  viewModel::getPath,
+                addPoint = viewModel::addPoint,
+                mapRange = viewModel::mapRange,
+                xOffsetState = uiState.xOffsetState,
+                yOffsetState = uiState.yOffsetState,
+                startTest = viewModel::startTest,
+                stopTest = viewModel::stopTest,
+                resetTest = viewModel::clearTest
             )
         }
+
     }
 }
