@@ -14,21 +14,29 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
+import androidx.room.Room
+import com.example.bleibboard.ui.screens.AthleteDataScreen
 import com.example.bleibboard.ui.screens.BluetoothScreen
 import com.example.bleibboard.ui.screens.DeviceScreen
+import com.example.bleibboard.ui.screens.MenuScreen
 import com.example.bleibboard.ui.screens.TestScreen
 import com.example.bleibboard.ui.screens.Welcome
 import com.example.bleibboard.ui.screens.haveAllPermissions
 import com.example.bleibboard.ui.theme.BLEIBBoardTheme
 import com.example.bleibboard.ui.viewmodels.BLEViewModel
+import com.example.bleibboard.ui.viewmodels.TestListViewModel
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -58,7 +66,8 @@ enum class Screens() {
 @Composable
 fun Navigation(
     navController: NavHostController = rememberNavController(),
-    viewModel: BLEViewModel = viewModel()
+    viewModel: BLEViewModel = viewModel(),
+    recordsViewmodel: TestListViewModel = hiltViewModel()
 ) {
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -70,8 +79,11 @@ fun Navigation(
 
     NavHost(
         navController = navController,
-        startDestination = Screens.Welcome.name
+        startDestination = Screens.Menu.name
     ) {
+        composable(route = Screens.Menu.name) {
+            MenuScreen(navController = navController)
+        }
         composable(route = Screens.Welcome.name) {
             Welcome {
                 allPermissionsGranted = true
@@ -108,16 +120,17 @@ fun Navigation(
         }
         composable(route = Screens.Test.name) {
             TestScreen(
+                viewmodel = viewModel,
                 getPath =  viewModel::getPath,
-                addPoint = viewModel::addPoint,
-                mapRange = viewModel::mapRange,
                 xOffsetState = uiState.xOffsetState,
                 yOffsetState = uiState.yOffsetState,
-                startTest = viewModel::startTest,
-                stopTest = viewModel::stopTest,
-                resetTest = viewModel::clearTest
+                navToResults = { navController.navigate(Screens.Records.name) }
             )
         }
-
+        composable(route = Screens.Records.name) {
+            AthleteDataScreen(
+                viewModel = recordsViewmodel,
+                onEvent = recordsViewmodel::onEvent)
+        }
     }
 }

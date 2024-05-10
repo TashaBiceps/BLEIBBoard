@@ -1,6 +1,5 @@
 package com.example.bleibboard.ui.screens
 
-import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,72 +25,168 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.addPathNodes
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.bleibboard.ui.viewmodels.BLEViewModel
-import com.example.bleibboard.ui.viewmodels.TestViewModel
+import com.example.bleibboard.ui.viewmodels.MenuViewmodel
 import kotlinx.coroutines.launch
 import kotlin.reflect.KFunction5
 
 @Composable
 fun TestScreen(
+    viewmodel: BLEViewModel,
     getPath: () -> Path,
-    addPoint : (Float, Float) -> Unit,
-    mapRange: KFunction5<Float, Float, Float, Float, Float, Float>,
     xOffsetState: Float,
     yOffsetState: Float,
-    startTest: suspend () -> Unit,
-    stopTest: () -> Unit,
-    resetTest: () -> Unit
+    navToResults: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
 
-    Graph(
-        getPath = getPath,
-        addPoint = addPoint,
-        mapRange = mapRange,
-        xOffsetState = xOffsetState,
-        yOffsetState = yOffsetState
-    )
+    val testUiState by viewmodel.testUiState.collectAsStateWithLifecycle()
 
-    Row(
-        verticalAlignment = Alignment.Bottom,
-        modifier = Modifier
-            .fillMaxWidth()
+    Column(
+        modifier = Modifier.fillMaxSize()
     ) {
-        Button(
+        Text(
+            text = "Postural Stability Test",
+            modifier = Modifier.padding(10.dp),
+            style = TextStyle(
+                fontSize = 20.sp,
+                color = Color.Black
+            ),
+            textAlign = TextAlign.Center
+        )
+        Graph(
+            getPath = getPath,
+            addPoint = viewmodel::addPoint,
+            mapRange = viewmodel::mapRange,
+            xOffsetState = xOffsetState,
+            yOffsetState = yOffsetState
+        )
+        Text(
+            text = "Time Left: ${testUiState.timeLeft}",
+            modifier = Modifier.padding(10.dp),
+            style = TextStyle(
+                fontSize = 20.sp,
+                color = Color.Black
+            ),
+            textAlign = TextAlign.Left
+        )
+        Text(
+            text = "Trials Left: ${testUiState.trialsLeft}",
+            modifier = Modifier.padding(10.dp),
+            style = TextStyle(
+                fontSize = 20.sp,
+                color = Color.Black
+            ),
+            textAlign = TextAlign.Left
+        )
+        Text(
+            text = "Test Status: ${testUiState.status}",
+            modifier = Modifier.padding(10.dp),
+            style = TextStyle(
+                fontSize = 20.sp,
+                color = Color.Black
+            ),
+            textAlign = TextAlign.Left
+        )
+        Text(
+            text = "OSI, APSI, MLSI: ${testUiState.testScore.OSI}, ${testUiState.testScore.APSI}, ${testUiState.testScore.MLSI}",
+            modifier = Modifier.padding(10.dp),
+            style = TextStyle(
+                fontSize = 20.sp,
+                color = Color.Black
+            ),
+            textAlign = TextAlign.Left
+        )
+        Row(
+            verticalAlignment = Alignment.Bottom,
             modifier = Modifier
-                .weight(1f)
-                .padding(10.dp),
-            onClick = {
-                coroutineScope.launch {
-                    startTest()
+                .fillMaxWidth()
+        ) {
+            //Initial start test
+            if (testUiState.trialsLeft > 0 && testUiState.status == 0) {
+                Button(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(10.dp),
+                    onClick = {
+                        coroutineScope.launch {
+                            viewmodel.startTest()
+                        }
+                    }
+                )
+                {
+                    Text("Start Test/Trial")
                 }
-            })
-        {
-            Text("Start")
-        }
 
-        Button(
-            modifier = Modifier
-                .weight(1f)
-                .padding(10.dp),
-            onClick = stopTest)
-        {
-            Text("Stop")
-        }
-        Button(
-            modifier = Modifier
-                .weight(1f)
-                .padding(10.dp),
-            onClick = resetTest)
-        {
-            Text("Reset")
+            }
+            //Stop test in the middle of trial
+            else if (testUiState.status == 1) {
+                Button(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(10.dp),
+                    onClick = {
+                        coroutineScope.launch {
+                            viewmodel.stopTest()
+                        }
+                    }
+                ) {
+                    Text("Stop Test")
+                }
+            }
+            //If stopped, can restart trial or quit test
+            else if (testUiState.trialsLeft > 0 && testUiState.status == 2) {
+                Button(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(10.dp),
+                    onClick = {
+                        coroutineScope.launch {
+                            viewmodel.restartTrial()
+                        }
+                    }
+                ) {
+                    Text("Restart Trail")
+                }
+                Button(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(10.dp),
+                    onClick = {
+                        coroutineScope.launch {
+                            viewmodel.resetTest()
+                        }
+                    }
+                ) {
+                    Text("Quit Test")
+                }
+            }
+            //If finished all trials can save test and view results
+            else if (testUiState.trialsLeft <= 0 && testUiState.status == 0) {
+                Button(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(10.dp),
+                    onClick = {
+                    coroutineScope.launch {
+                        //viewmodel.saveTest()
+                        navToResults()
+                    }
+                }) {
+                    Text("Save and view Results")
+                }
+            }
         }
     }
 }
+
 
 @Composable
 fun Graph(

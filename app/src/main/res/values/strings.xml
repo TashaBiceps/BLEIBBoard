@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">BLEIBBoard</string>
+    <string name="menu_button_athleterecords">Athlete Records</string>
+    <string name="menu_button_test">Begin Test</string>
 </resources>
