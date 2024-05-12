@@ -1,4 +1,4 @@
-package com.example.bleibboard.ui.screens
+package com.example.bleibboard.presentation.view
 
 import android.Manifest
 import android.content.Context
@@ -9,7 +9,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Button
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -33,7 +32,7 @@ fun haveAllPermissions(context: Context) =
     ALL_BLE_PERMISSIONS.all { context.checkSelfPermission(it) == PackageManager.PERMISSION_GRANTED }
 
 @Composable
-fun Welcome(onPermissionGranted: () -> Unit) {
+fun PermissionReqScreen(onPermissionGranted: () -> Unit) {
     Box {
         Column (modifier = Modifier.align(Alignment.Center)
         ) {

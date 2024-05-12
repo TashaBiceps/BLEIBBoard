@@ -1,4 +1,4 @@
-package com.example.bleibboard.ui.state
+package com.example.bleibboard.presentation.state
 
 import com.example.bleibboard.domain.BtMPUData
 import com.example.bleibboard.domain.TestScoresData

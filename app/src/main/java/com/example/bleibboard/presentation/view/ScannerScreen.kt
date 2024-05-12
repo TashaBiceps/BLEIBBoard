@@ -1,4 +1,4 @@
-package com.example.bleibboard.ui.screens
+package com.example.bleibboard.presentation.view
 
 import android.bluetooth.BluetoothDevice
 import androidx.annotation.RequiresPermission
@@ -14,35 +14,38 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.bleibboard.ble.PERMISSION_BLUETOOTH_CONNECT
-import com.example.bleibboard.ble.PERMISSION_BLUETOOTH_SCAN
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
+import com.example.bleibboard.data.remote.ble.PERMISSION_BLUETOOTH_CONNECT
+import com.example.bleibboard.data.remote.ble.PERMISSION_BLUETOOTH_SCAN
+import com.example.bleibboard.presentation.viewmodel.ScannerViewmodel
 
 @Composable
 @RequiresPermission(allOf = [PERMISSION_BLUETOOTH_SCAN, PERMISSION_BLUETOOTH_CONNECT])
-fun BluetoothScreen(
-    isScanning: Boolean,
-    foundDevices: List<BluetoothDevice>,
-    startScanning: () -> Unit,
-    stopScanning: () -> Unit,
-    selectDevice: (BluetoothDevice) -> Unit,
-    navigateToTest: () -> Unit
+fun ScannerScreen(
+    navController: NavController
 ) {
+
+    val viewmodel: ScannerViewmodel = hiltViewModel()
+    val scannerState by viewmodel.scannerState.collectAsStateWithLifecycle()
+
     Column (
         Modifier.padding(horizontal = 10.dp)
     ){
-        if (isScanning) {
+        if (scannerState.isScanning) {
             Text("Scanning...")
 
-            Button(onClick = stopScanning) {
+            Button(onClick = viewmodel::stopScanning) {
                 Text("Stop Scanning")
             }
         }
         else {
-            Button(onClick = startScanning) {
+            Button(onClick = viewmodel::startScanning) {
                 Text("Start Scanning")
             }
         }
@@ -50,10 +53,10 @@ fun BluetoothScreen(
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            items(foundDevices) { device ->
+            items(scannerState.foundDevices) { device ->
                 DeviceItem(
                     deviceName = device.name,
-                    selectDevice = { selectDevice(device); navigateToTest() }
+                    selectDevice = { viewmodel.setActiveDevice(device); viewmodel.navigateToDevice(navController) }
                 )
             }
         }
@@ -82,10 +85,4 @@ fun DeviceItem(
             }
         }
     }
-}
-
-@Preview
-@Composable
-fun PreviewDeviceItem() {
-    DeviceItem(deviceName = "A test BLE device", selectDevice = { })
 }

@@ -1,4 +1,5 @@
-package com.example.bleibboard.ble
+package com.example.bleibboard.data.remote.ble
+
 
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
@@ -10,15 +11,11 @@ import android.content.Context
 import android.util.Log
 import androidx.annotation.RequiresPermission
 import com.example.bleibboard.domain.BtMPUData
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
 import java.util.UUID
 
-val CTF_SERVICE_UUID: UUID = UUID.fromString("ccc82ba1-72c8-49ba-b712-2e49bad52eef")
-val PASSWORD_CHARACTERISTIC_UUID: UUID = UUID.fromString("27501e93-1513-4074-866e-6bc3580103f8")
-val NAME_CHARACTERISTIC_UUID: UUID = UUID.fromString("8c380002-10bd-4fdb-ba21-1922d6cf860d")
-
+val CTF_SERVICE_UUID: UUID = UUID.fromString("ccc82ba1-72c8-49ba-b712-2e49bad52eef") //Service UUID of gyroscope data from IBBoard
+val GYROSCOPE_CHARACTERISTIC_UUID: UUID = UUID.fromString("27501e93-1513-4074-866e-6bc3580103f8") // Characteristic UUID of gyroscope data from IBBoard
 
 @Suppress("DEPRECATION")
 class BLEDeviceConnection @RequiresPermission("PERMISSION_BLUETOOTH_CONNECT") constructor(
@@ -27,15 +24,9 @@ class BLEDeviceConnection @RequiresPermission("PERMISSION_BLUETOOTH_CONNECT") co
 ) {
     val isConnected = MutableStateFlow(false)
     val passwordRead = MutableStateFlow<String?>(null)
-    val successfulNameWrites = MutableStateFlow(0)
     val services = MutableStateFlow<List<BluetoothGattService>>(emptyList())
 
-    val xValues = MutableStateFlow<Float>(0.0F)
-    val yValues = MutableStateFlow<Float>(0.0F)
-
     val xandyvalues = MutableStateFlow<BtMPUData>(BtMPUData(0.0F, 0.0F))
-
-    val notifications = MutableSharedFlow<String>()
 
     private val callback = object: BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
@@ -67,21 +58,11 @@ class BLEDeviceConnection @RequiresPermission("PERMISSION_BLUETOOTH_CONNECT") co
             status: Int
         ) {
             super.onCharacteristicRead(gatt, characteristic, status)
-            if (characteristic.uuid == PASSWORD_CHARACTERISTIC_UUID) {
+            if (characteristic.uuid == GYROSCOPE_CHARACTERISTIC_UUID) {
                 passwordRead.value = String(characteristic.value)
             }
         }
 
-        override fun onCharacteristicWrite(
-            gatt: BluetoothGatt,
-            characteristic: BluetoothGattCharacteristic,
-            status: Int
-        ) {
-            super.onCharacteristicWrite(gatt, characteristic, status)
-            if (characteristic.uuid == NAME_CHARACTERISTIC_UUID) {
-                successfulNameWrites.update { it + 1 }
-            }
-        }
 
         @Deprecated("Deprecated in Java")
         override fun onCharacteristicChanged(
@@ -89,14 +70,9 @@ class BLEDeviceConnection @RequiresPermission("PERMISSION_BLUETOOTH_CONNECT") co
             characteristic: BluetoothGattCharacteristic
         ) {
             super.onCharacteristicChanged(gatt, characteristic)
-            //Log.v("bluetooth", characteristic.value.contentToString())
             val notification = characteristic.value.contentToString()
-            //Log.v("btMPUData", String(characteristic.value,Charsets.UTF_8))
-            //Log.v("notification", notification)
-            //notifications.tryEmit(notification)
             val btMPUData = String(characteristic.value,Charsets.UTF_8).toBtMPUData()
             Log.v("btMPUData", btMPUData.toString())
-            //xandyvalues.tryEmit(btMPUData)
             xandyvalues.value = btMPUData
         }
     }
@@ -124,7 +100,7 @@ class BLEDeviceConnection @RequiresPermission("PERMISSION_BLUETOOTH_CONNECT") co
     fun startReceiving() {
         val service = gatt?.getService(CTF_SERVICE_UUID)
         Log.v("bluetooth", "Service: $service")
-        val characteristic = service?.getCharacteristic(PASSWORD_CHARACTERISTIC_UUID)
+        val characteristic = service?.getCharacteristic(GYROSCOPE_CHARACTERISTIC_UUID)
         Log.v("bluetooth", "Characteristic: $characteristic")
         if (characteristic != null) {
             gatt?.setCharacteristicNotification(characteristic, true)
@@ -146,28 +122,4 @@ class BLEDeviceConnection @RequiresPermission("PERMISSION_BLUETOOTH_CONNECT") co
             yValue = yValue
         )
     }
-
-    /*
-    @RequiresPermission(PERMISSION_BLUETOOTH_CONNECT)
-    fun readPassword() {
-        val service = gatt?.getService(CTF_SERVICE_UUID)
-        val characteristic = service?.getCharacteristic(PASSWORD_CHARACTERISTIC_UUID)
-        if (characteristic != null) {
-            val success = gatt?.readCharacteristic(characteristic)
-            Log.v("bluetooth", "Read status: $success")
-        }
-    }
-
-    @RequiresPermission(PERMISSION_BLUETOOTH_CONNECT)
-    fun writeName() {
-        val service = gatt?.getService(CTF_SERVICE_UUID)
-        val characteristic = service?.getCharacteristic(NAME_CHARACTERISTIC_UUID)
-        if (characteristic != null) {
-            characteristic.value = "Tom".toByteArray()
-            val success = gatt?.writeCharacteristic(characteristic)
-            Log.v("bluetooth", "Write status: $success")
-        }
-    }
-
-     */
 }

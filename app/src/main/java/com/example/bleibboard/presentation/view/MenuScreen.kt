@@ -1,9 +1,11 @@
-package com.example.bleibboard.ui.screens
+package com.example.bleibboard.presentation.view
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Text
@@ -16,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.bleibboard.R
-import com.example.bleibboard.ui.viewmodels.MenuViewmodel
+import com.example.bleibboard.presentation.viewmodel.MenuViewmodel
 
 @Composable
 fun MenuScreen(
@@ -25,11 +27,14 @@ fun MenuScreen(
     modifier: Modifier = Modifier
 ) {
     Row(
-        verticalAlignment = Alignment.CenterVertically
+        modifier = modifier.fillMaxSize(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
     ) {
         Column(
-            modifier = modifier,
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier = modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             Image(
                 painter = painterResource(id = R.drawable.menu_title),

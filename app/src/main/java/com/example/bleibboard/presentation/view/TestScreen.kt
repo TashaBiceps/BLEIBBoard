@@ -1,4 +1,4 @@
-package com.example.bleibboard.ui.screens
+package com.example.bleibboard.presentation.view
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -30,24 +29,23 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.viewModelFactory
-import com.example.bleibboard.ui.viewmodels.BLEViewModel
-import com.example.bleibboard.ui.viewmodels.MenuViewmodel
+import androidx.navigation.NavController
+import com.example.bleibboard.presentation.viewmodel.TestScreenViewmodel
 import kotlinx.coroutines.launch
 import kotlin.reflect.KFunction5
 
 @Composable
 fun TestScreen(
-    viewmodel: BLEViewModel,
-    getPath: () -> Path,
-    xOffsetState: Float,
-    yOffsetState: Float,
-    navToResults: () -> Unit
+    navController: NavController
 ) {
+
+    val viewmodel : TestScreenViewmodel = hiltViewModel()
     val coroutineScope = rememberCoroutineScope()
 
-    val testUiState by viewmodel.testUiState.collectAsStateWithLifecycle()
+    val testUiState by viewmodel.testState.collectAsStateWithLifecycle()
+    val coordinateState by viewmodel.coordinateState.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -62,11 +60,11 @@ fun TestScreen(
             textAlign = TextAlign.Center
         )
         Graph(
-            getPath = getPath,
+            getPath = viewmodel::getPath,
             addPoint = viewmodel::addPoint,
             mapRange = viewmodel::mapRange,
-            xOffsetState = xOffsetState,
-            yOffsetState = yOffsetState
+            xOffsetState = coordinateState.xOffsetState,
+            yOffsetState = coordinateState.yOffsetState
         )
         Text(
             text = "Time Left: ${testUiState.timeLeft}",
@@ -175,11 +173,11 @@ fun TestScreen(
                         .weight(1f)
                         .padding(10.dp),
                     onClick = {
-                    coroutineScope.launch {
-                        //viewmodel.saveTest()
-                        navToResults()
-                    }
-                }) {
+                        coroutineScope.launch {
+                            //viewmodel.saveTest()
+                            viewmodel.navToAthleteData(navController)
+                        }
+                    }) {
                     Text("Save and view Results")
                 }
             }
@@ -195,7 +193,7 @@ fun Graph(
     xOffsetState: Float,
     yOffsetState: Float,
     addPoint : (Float, Float) -> Unit
-    ) {
+) {
 
     var boxWidth by remember { mutableStateOf(0f) }
     var boxHeight by remember { mutableStateOf(0f) }
@@ -307,6 +305,3 @@ fun RedPointer(
         )
     }
 }
-
-
-

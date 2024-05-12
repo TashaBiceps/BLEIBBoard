@@ -1,4 +1,4 @@
-package com.example.bleibboard.ble
+package com.example.bleibboard.data.remote.ble
 
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
@@ -18,7 +18,7 @@ const val PERMISSION_BLUETOOTH_CONNECT = "android.permission.BLUETOOTH_CONNECT"
 class BLEScanner(context: Context) {
 
     private val bluetooth = context.getSystemService(Context.BLUETOOTH_SERVICE)
-        as? BluetoothManager
+            as? BluetoothManager
         ?: throw Exception("Bluetooth is not supported by this device")
 
     val isScanning = MutableStateFlow(false)

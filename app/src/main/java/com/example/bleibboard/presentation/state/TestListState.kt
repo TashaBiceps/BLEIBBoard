@@ -1,4 +1,4 @@
-package com.example.bleibboard.ui.state
+package com.example.bleibboard.presentation.state
 
 import com.example.bleibboard.data.local.SortType
 import com.example.bleibboard.data.local.Tests

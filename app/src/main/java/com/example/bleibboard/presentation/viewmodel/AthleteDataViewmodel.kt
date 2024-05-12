@@ -1,13 +1,12 @@
-package com.example.bleibboard.ui.viewmodels
+package com.example.bleibboard.presentation.viewmodel
 
-import AthleteTestsRepository
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bleibboard.data.local.SortType
 import com.example.bleibboard.data.local.TestEvent
 import com.example.bleibboard.data.local.Tests
 import com.example.bleibboard.data.local.TestsDao
-import com.example.bleibboard.ui.state.TestListState
+import com.example.bleibboard.presentation.state.TestListState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,7 +19,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class TestListViewModel @Inject constructor(
+class AthleteDataViewmodel @Inject constructor(
     private val dao : TestsDao
 ): ViewModel() {
 
@@ -28,12 +27,12 @@ class TestListViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     private val _tests = _sortType
         .flatMapLatest { sortType ->
-        when(sortType) {
-            SortType.FIRST_NAME -> dao.queryTestsOrderedByFirstName()
-            SortType.LAST_NAME -> dao.queryTestsOrderedByLastName()
-            SortType.DATE -> dao.queryTestsOrderedByDate()
-        }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+            when(sortType) {
+                SortType.FIRST_NAME -> dao.queryTestsOrderedByFirstName()
+                SortType.LAST_NAME -> dao.queryTestsOrderedByLastName()
+                SortType.DATE -> dao.queryTestsOrderedByDate()
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
     private val _state = MutableStateFlow(TestListState())
     val state = combine(_state, _sortType, _tests) { state, sortType, tests ->
@@ -85,7 +84,7 @@ class TestListViewModel @Inject constructor(
             is TestEvent.SetLastName -> {
                 _state.update { it.copy(
                     lastName = event.lastName
-                    ) }
+                ) }
             }
             is TestEvent.SetDate -> {
                 _state.update { it.copy(
